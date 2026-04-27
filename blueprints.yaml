@@ -1,0 +1,207 @@
+# OPI Blueprint Registry
+# ──────────────────────────────────────────────────────────────────────────────
+# Each entry represents one blueprint proposal submitted to the OPI TSC.
+#
+# STAGES (in order):
+#   proposed      → One-pager submitted, awaiting TSC scheduling
+#   tsc_review    → Presented to TSC; resource & priority alignment in progress
+#   build         → Engineering work underway; deliverables being produced
+#   validate      → Solution built; validation/testing in progress in OPI Lab
+#   published     → All deliverables complete; published to GitHub & OPI website
+#
+# CATEGORIES: networking | security | storage | provisioning | compute
+#
+# DELIVERABLES (all five required for "published"):
+#   reference_architecture  – topology diagram (hw, sw, network)
+#   bill_of_materials       – validated HW/SW list with versions
+#   deployment_guide        – step-by-step docs + IaC artifacts
+#   use_case_narrative      – business problem, target persona, why DPU/IPU
+#   validation_results      – benchmarks, screenshots, or recorded walkthrough
+# ──────────────────────────────────────────────────────────────────────────────
+
+blueprints:
+
+  - id: BP-001
+    title: "F5 BIG-IP Next + Intel IPU E2100 on Red Hat OpenShift"
+    stage: published
+    category: networking
+    submitted: "2024-09-15"
+    updated: "2025-03-10"
+    use_case: >
+      Kubernetes-native L4–L7 load balancing offloaded to Intel IPU E2100,
+      freeing host CPU cores for application workloads in a multi-tenant
+      OpenShift cluster.
+    target_persona: "Network architect, platform engineer"
+    partners:
+      - name: "WorldTech IT"
+        role: "Lead integrator"
+        contact: "josh@worldtechit.com"
+      - name: "Dell Technologies"
+        role: "Hardware"
+      - name: "Intel"
+        role: "IPU hardware"
+      - name: "F5"
+        role: "BIG-IP Next software"
+      - name: "Red Hat"
+        role: "OpenShift platform"
+    hardware:
+      - "Dell PowerEdge R760"
+      - "Intel IPU E2100"
+    software:
+      - "Red Hat OpenShift 4.14"
+      - "F5 BIG-IP Next for Kubernetes 20.x"
+      - "RHEL 9.3"
+    opi_components:
+      - "opi-api (networking)"
+      - "DPU Operator"
+    deliverables:
+      reference_architecture: true
+      bill_of_materials: true
+      deployment_guide: true
+      use_case_narrative: true
+      validation_results: true
+    links:
+      github_issue: "https://github.com/opiproject/opi/issues/1"
+      documentation: ""
+    notes: "Showcased at OCP Global Summit 2024."
+
+  - id: BP-002
+    title: "Zero-Touch Provisioning with sZTP on Marvell OCTEON DPU"
+    stage: validate
+    category: provisioning
+    submitted: "2024-11-01"
+    updated: "2025-04-10"
+    use_case: >
+      Automated, cryptographically-secure initial provisioning of a DPU/IPU
+      fleet using OPI's sZTP implementation — no manual intervention required
+      from factory floor to production rack.
+    target_persona: "Infrastructure engineer, NetOps team"
+    partners:
+      - name: "Marvell"
+        role: "DPU hardware + sZTP implementation"
+      - name: "Keysight Technologies"
+        role: "Test & validation"
+    hardware:
+      - "Marvell OCTEON CN10K DPU"
+    software:
+      - "OPI sZTP client"
+      - "OPI bootstrap server"
+    opi_components:
+      - "sztp"
+      - "opi-prov-life"
+    deliverables:
+      reference_architecture: true
+      bill_of_materials: true
+      deployment_guide: true
+      use_case_narrative: true
+      validation_results: false
+    links:
+      github_issue: "https://github.com/opiproject/opi/issues/2"
+      documentation: ""
+    notes: "Validation testing underway in OPI Lab. Expected completion Q2 2025."
+
+  - id: BP-003
+    title: "Multi-Tenant Network Isolation with OVS Offload on NVIDIA BlueField-3"
+    stage: build
+    category: networking
+    submitted: "2025-01-20"
+    updated: "2025-04-05"
+    use_case: >
+      Hardware-enforced tenant isolation for cloud-native workloads; OVS
+      dataplane offloaded to BlueField-3 DPU, enabling strict separation
+      between provider infrastructure and tenant applications.
+    target_persona: "Cloud operator, SecOps engineer"
+    partners:
+      - name: "NVIDIA"
+        role: "DPU hardware + DOCA SDK"
+      - name: "Red Hat"
+        role: "OpenShift platform"
+    hardware:
+      - "NVIDIA BlueField-3 DPU"
+    software:
+      - "NVIDIA DOCA 2.x"
+      - "Open vSwitch 3.x"
+      - "Red Hat OpenShift 4.15"
+    opi_components:
+      - "opi-api (networking)"
+    deliverables:
+      reference_architecture: true
+      bill_of_materials: false
+      deployment_guide: false
+      use_case_narrative: true
+      validation_results: false
+    links:
+      github_issue: "https://github.com/opiproject/opi/issues/3"
+      documentation: ""
+    notes: "IaC artifacts (Helm charts, Ansible playbooks) in progress."
+
+  - id: BP-004
+    title: "NVMe-oF Storage Offload with SPDK on Intel IPU E2100"
+    stage: tsc_review
+    category: storage
+    submitted: "2025-02-14"
+    updated: "2025-03-28"
+    use_case: >
+      Disaggregated storage fabric using NVMe over Fabrics (NVMe-oF), with
+      the compute plane offloaded to the Intel IPU E2100 via OPI's SPDK
+      bridge — reducing host CPU overhead for storage I/O to near zero.
+    target_persona: "Storage architect, platform engineer"
+    partners:
+      - name: "Intel"
+        role: "IPU hardware + SPDK"
+      - name: "Dell Technologies"
+        role: "Server platform"
+    hardware:
+      - "Intel IPU E2100"
+      - "Dell PowerEdge R760"
+    software:
+      - "SPDK 23.x"
+      - "OPI SPDK bridge"
+      - "RHEL 9.3"
+    opi_components:
+      - "opi-spdk-bridge"
+      - "opi-api (storage)"
+    deliverables:
+      reference_architecture: false
+      bill_of_materials: false
+      deployment_guide: false
+      use_case_narrative: true
+      validation_results: false
+    links:
+      github_issue: "https://github.com/opiproject/opi/issues/4"
+      documentation: ""
+    notes: "TSC presentation scheduled for next meeting. Lab hardware availability TBD."
+
+  - id: BP-005
+    title: "IPSec / MACsec Line-Rate Encryption Offload for East-West Traffic"
+    stage: proposed
+    category: security
+    submitted: "2025-04-01"
+    updated: "2025-04-01"
+    use_case: >
+      Line-rate encryption of data-center east-west traffic (IPSec and MACsec)
+      offloaded to Marvell OCTEON DPU — eliminating host CPU encryption overhead
+      while meeting compliance requirements for data-in-transit.
+    target_persona: "CISO, SecOps engineer"
+    partners:
+      - name: "Marvell"
+        role: "DPU hardware + crypto offload"
+      - name: "F5"
+        role: "Policy & orchestration"
+    hardware:
+      - "Marvell OCTEON CN10K DPU"
+    software:
+      - "strongSwan (IPSec)"
+      - "MACsec kernel driver"
+    opi_components:
+      - "opi-api (security)"
+    deliverables:
+      reference_architecture: false
+      bill_of_materials: false
+      deployment_guide: false
+      use_case_narrative: false
+      validation_results: false
+    links:
+      github_issue: "https://github.com/opiproject/opi/issues/5"
+      documentation: ""
+    notes: "One-pager submitted. Awaiting TSC scheduling."

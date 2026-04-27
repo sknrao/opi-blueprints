@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>OPI Blueprint Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+<style>
+  :root {
+    --font: 'IBM Plex Mono', monospace;
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface2: #1c2330;
+    --border: #30363d;
+    --text: #e6edf3;
+    --muted: #7d8590;
+    --accent: #58a6ff;
+
+    --proposed:   #b3d4ff; --proposed-bg:   #0d2141;
+    --tsc:        #d2a8ff; --tsc-bg:        #1e1047;
+    --build:      #ffa657; --build-bg:      #341900;
+    --validate:   #79c0ff; --validate-bg:   #0c2d6b;
+    --published:  #56d364; --published-bg:  #0d3320;
+
+    --networking:   #58a6ff; --networking-bg:   #0d2141;
+    --security:     #f85149; --security-bg:     #340d0c;
+    --storage:      #ffa657; --storage-bg:      #341900;
+    --provisioning: #d2a8ff; --provisioning-bg: #1e1047;
+    --compute:      #56d364; --compute-bg:      #0d3320;
+  }
+
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'IBM Plex Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* ── Header ── */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .opi-logo {
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: .08em;
+    color: var(--accent);
+  }
+  .header-divider { color: var(--border); font-size: 20px; }
+  .header-title { font-size: 14px; color: var(--muted); }
+  .last-updated { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--muted); }
+
+  /* ── Main layout ── */
+  main { max-width: 1280px; margin: 0 auto; padding: 1.5rem 2rem; }
+
+  /* ── Metrics ── */
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+    margin-bottom: 1.5rem;
+  }
+  .metric {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: .875rem 1rem;
+  }
+  .metric-label { font-size: 11px; color: var(--muted); font-family: 'IBM Plex Mono', monospace; margin-bottom: 4px; }
+  .metric-value { font-size: 26px; font-weight: 600; font-family: 'IBM Plex Mono', monospace; color: var(--text); }
+
+  /* ── Controls ── */
+  .controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+  }
+  .controls-label { font-size: 12px; color: var(--muted); font-family: 'IBM Plex Mono', monospace; }
+  .filter-btn {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .filter-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .filter-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(88,166,255,.08); }
+
+  /* ── Pipeline ── */
+  .pipeline {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    margin-bottom: 1.5rem;
+    align-items: start;
+  }
+
+  .lane { border-radius: 8px; overflow: hidden; border: 1px solid var(--border); background: var(--surface); }
+
+  .lane-header {
+    padding: 8px 12px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+  .lane-count {
+    font-size: 10px;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 600;
+  }
+
+  .lane-proposed  .lane-header { color: var(--proposed);   }
+  .lane-tsc       .lane-header { color: var(--tsc);        }
+  .lane-build     .lane-header { color: var(--build);      }
+  .lane-validate  .lane-header { color: var(--validate);   }
+  .lane-published .lane-header { color: var(--published);  }
+
+  .lane-proposed  .lane-count { background: var(--proposed-bg);   color: var(--proposed);  }
+  .lane-tsc       .lane-count { background: var(--tsc-bg);        color: var(--tsc);       }
+  .lane-build     .lane-count { background: var(--build-bg);       color: var(--build);     }
+  .lane-validate  .lane-count { background: var(--validate-bg);   color: var(--validate);  }
+  .lane-published .lane-count { background: var(--published-bg);  color: var(--published); }
+
+  .lane-body { padding: 8px; display: flex; flex-direction: column; gap: 6px; min-height: 60px; }
+
+  /* ── Blueprint card ── */
+  .bp-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+  }
+  .bp-card:hover { border-color: var(--accent); background: rgba(88,166,255,.04); }
+  .bp-card.selected { border-color: var(--accent); background: rgba(88,166,255,.07); }
+
+  .card-id { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--muted); margin-bottom: 4px; }
+  .card-title { font-size: 12px; font-weight: 500; color: var(--text); line-height: 1.4; margin-bottom: 6px; }
+  .card-footer { display: flex; align-items: center; justify-content: space-between; gap: 4px; }
+  .cat-badge {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-weight: 500;
+  }
+  .prog-mini { display: flex; align-items: center; gap: 4px; }
+  .prog-dots { display: flex; gap: 2px; }
+  .prog-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--border); }
+  .prog-dot.done { background: var(--published); }
+  .prog-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--muted); }
+
+  /* ── Detail panel ── */
+  .detail-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.25rem 1.5rem;
+    display: none;
+    margin-bottom: 1.5rem;
+  }
+  .detail-panel.open { display: block; }
+  .detail-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .detail-id { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+  .detail-title { font-size: 16px; font-weight: 600; color: var(--text); }
+  .close-btn {
+    background: transparent; border: 1px solid var(--border);
+    color: var(--muted); border-radius: 4px;
+    padding: 4px 10px; cursor: pointer; font-size: 12px;
+    white-space: nowrap; flex-shrink: 0;
+    transition: border-color .15s, color .15s;
+  }
+  .close-btn:hover { border-color: var(--muted); color: var(--text); }
+
+  .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+
+  .detail-section { margin-bottom: 1rem; }
+  .detail-section:last-child { margin-bottom: 0; }
+  .dl { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 4px; }
+  .dv { font-size: 13px; color: var(--text); }
+
+  .partners-list { display: flex; flex-direction: column; gap: 4px; }
+  .partner { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+  .partner-name { color: var(--text); font-weight: 500; }
+  .partner-role { color: var(--muted); font-size: 11px; }
+
+  .hw-list { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+  .hw-tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px; padding: 2px 8px; border-radius: 3px;
+    background: rgba(88,166,255,.08); border: 1px solid rgba(88,166,255,.2); color: var(--accent);
+  }
+
+  .deliverables-grid { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+  .deliverable-row { display: flex; align-items: center; gap: 8px; }
+  .deliverable-row .icon { font-size: 12px; width: 16px; text-align: center; }
+  .deliverable-row .d-label { font-size: 12px; color: var(--text); }
+  .deliverable-row.done .icon { color: var(--published); }
+  .deliverable-row.pending .icon { color: var(--border); }
+  .deliverable-row.pending .d-label { color: var(--muted); }
+
+  .prog-bar-wrap { margin-top: 12px; }
+  .prog-bar-label { display: flex; justify-content: space-between; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+  .prog-bar-track { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .prog-bar-fill { height: 100%; background: var(--published); border-radius: 2px; transition: width .4s ease; }
+
+  .detail-notes {
+    margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border);
+    font-size: 12px; color: var(--muted); font-style: italic;
+  }
+
+  .detail-links { display: flex; gap: 8px; margin-top: .5rem; }
+  .detail-link {
+    font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+    padding: 4px 10px; border-radius: 4px;
+    border: 1px solid var(--border); color: var(--accent);
+    text-decoration: none; background: transparent;
+    transition: border-color .15s, background .15s;
+  }
+  .detail-link:hover { border-color: var(--accent); background: rgba(88,166,255,.08); }
+
+  /* ── Empty state ── */
+  .empty { padding: 2rem; text-align: center; color: var(--muted); font-size: 12px; }
+
+  /* ── Error ── */
+  .error-banner {
+    background: rgba(248,81,73,.1); border: 1px solid rgba(248,81,73,.3);
+    border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1rem;
+    color: #f85149; font-size: 13px; display: none;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 900px) {
+    .pipeline { grid-template-columns: repeat(2, 1fr); }
+    .detail-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 600px) {
+    header, main { padding-left: 1rem; padding-right: 1rem; }
+    .pipeline { grid-template-columns: 1fr; }
+    .metrics { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <span class="opi-logo">OPI</span>
+    <span class="header-divider">/</span>
+    <span class="header-title">Blueprint Dashboard</span>
+  </div>
+  <span class="last-updated" id="last-updated"></span>
+</header>
+
+<main>
+  <div class="error-banner" id="error-banner"></div>
+
+  <!-- Metrics -->
+  <div class="metrics">
+    <div class="metric"><div class="metric-label">total blueprints</div><div class="metric-value" id="m-total">—</div></div>
+    <div class="metric"><div class="metric-label">in progress</div><div class="metric-value" id="m-active">—</div></div>
+    <div class="metric"><div class="metric-label">published</div><div class="metric-value" id="m-pub">—</div></div>
+    <div class="metric"><div class="metric-label">partners involved</div><div class="metric-value" id="m-partners">—</div></div>
+  </div>
+
+  <!-- Filters -->
+  <div class="controls">
+    <span class="controls-label">filter:</span>
+    <button class="filter-btn active" data-filter="all">all</button>
+    <button class="filter-btn" data-filter="networking">networking</button>
+    <button class="filter-btn" data-filter="security">security</button>
+    <button class="filter-btn" data-filter="storage">storage</button>
+    <button class="filter-btn" data-filter="provisioning">provisioning</button>
+    <button class="filter-btn" data-filter="compute">compute</button>
+  </div>
+
+  <!-- Detail panel -->
+  <div class="detail-panel" id="detail-panel">
+    <div class="detail-top">
+      <div>
+        <div class="detail-id" id="dp-id"></div>
+        <div class="detail-title" id="dp-title"></div>
+      </div>
+      <button class="close-btn" onclick="closeDetail()">close ✕</button>
+    </div>
+    <div class="detail-grid">
+      <div>
+        <div class="detail-section">
+          <div class="dl">use case</div>
+          <div class="dv" id="dp-usecase"></div>
+        </div>
+        <div class="detail-section">
+          <div class="dl">target persona</div>
+          <div class="dv" id="dp-persona"></div>
+        </div>
+        <div class="detail-section">
+          <div class="dl">partners</div>
+          <div class="partners-list" id="dp-partners"></div>
+        </div>
+        <div class="detail-section">
+          <div class="dl">hardware</div>
+          <div class="hw-list" id="dp-hw"></div>
+        </div>
+        <div class="detail-section">
+          <div class="dl">OPI components used</div>
+          <div class="hw-list" id="dp-opi"></div>
+        </div>
+        <div class="detail-section">
+          <div class="dl">links</div>
+          <div class="detail-links" id="dp-links"></div>
+        </div>
+      </div>
+      <div>
+        <div class="dl">deliverables</div>
+        <div class="deliverables-grid" id="dp-deliverables"></div>
+        <div class="prog-bar-wrap">
+          <div class="prog-bar-label"><span>completion</span><span id="dp-pct">0%</span></div>
+          <div class="prog-bar-track"><div class="prog-bar-fill" id="dp-bar" style="width:0%"></div></div>
+        </div>
+        <div class="detail-section" style="margin-top:1rem">
+          <div class="dl">submitted</div>
+          <div class="dv" id="dp-submitted"></div>
+        </div>
+        <div class="detail-section">
+          <div class="dl">last updated</div>
+          <div class="dv" id="dp-updated"></div>
+        </div>
+      </div>
+    </div>
+    <div class="detail-notes" id="dp-notes"></div>
+  </div>
+
+  <!-- Pipeline board -->
+  <div class="pipeline" id="pipeline">
+    <div class="lane lane-proposed">
+      <div class="lane-header">Proposed <span class="lane-count" id="cnt-proposed">0</span></div>
+      <div class="lane-body" id="lane-proposed"><div class="empty">loading…</div></div>
+    </div>
+    <div class="lane lane-tsc">
+      <div class="lane-header">TSC Review <span class="lane-count" id="cnt-tsc">0</span></div>
+      <div class="lane-body" id="lane-tsc"></div>
+    </div>
+    <div class="lane lane-build">
+      <div class="lane-header">Build &amp; Document <span class="lane-count" id="cnt-build">0</span></div>
+      <div class="lane-body" id="lane-build"></div>
+    </div>
+    <div class="lane lane-validate">
+      <div class="lane-header">Validate <span class="lane-count" id="cnt-validate">0</span></div>
+      <div class="lane-body" id="lane-validate"></div>
+    </div>
+    <div class="lane lane-published">
+      <div class="lane-header">Published <span class="lane-count" id="cnt-published">0</span></div>
+      <div class="lane-body" id="lane-published"></div>
+    </div>
+  </div>
+</main>
+
+<script>
+const YAML_URL = 'blueprints.yaml';
+
+const STAGE_MAP = {
+  proposed:   'proposed',
+  tsc_review: 'tsc',
+  build:      'build',
+  validate:   'validate',
+  published:  'published'
+};
+
+const DELIVERABLE_LABELS = {
+  reference_architecture: 'Reference architecture diagram',
+  bill_of_materials:      'Bill of materials',
+  deployment_guide:       'Deployment guide + IaC',
+  use_case_narrative:     'Use case narrative',
+  validation_results:     'Validation / test results'
+};
+
+const CAT_COLORS = {
+  networking:   { color: 'var(--networking)',   bg: 'var(--networking-bg)' },
+  security:     { color: 'var(--security)',     bg: 'var(--security-bg)' },
+  storage:      { color: 'var(--storage)',      bg: 'var(--storage-bg)' },
+  provisioning: { color: 'var(--provisioning)', bg: 'var(--provisioning-bg)' },
+  compute:      { color: 'var(--compute)',      bg: 'var(--compute-bg)' }
+};
+
+let allBlueprints = [];
+let activeFilter  = 'all';
+let selectedId    = null;
+
+async function loadData() {
+  try {
+    const res  = await fetch(YAML_URL);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const text = await res.text();
+    const data = jsyaml.load(text);
+    allBlueprints = data.blueprints || [];
+    document.getElementById('last-updated').textContent =
+      'loaded ' + new Date().toLocaleString();
+    render();
+  } catch (e) {
+    showError('Could not load blueprints.yaml: ' + e.message +
+      '. Make sure the file is in the same directory as index.html.');
+  }
+}
+
+function showError(msg) {
+  const el = document.getElementById('error-banner');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function render() {
+  const filtered = activeFilter === 'all'
+    ? allBlueprints
+    : allBlueprints.filter(b => b.category === activeFilter);
+
+  // Metrics
+  const partners = new Set();
+  filtered.forEach(b => (b.partners || []).forEach(p => partners.add(p.name)));
+  document.getElementById('m-total').textContent    = filtered.length;
+  document.getElementById('m-active').textContent   =
+    filtered.filter(b => ['tsc_review','build','validate'].includes(b.stage)).length;
+  document.getElementById('m-pub').textContent      =
+    filtered.filter(b => b.stage === 'published').length;
+  document.getElementById('m-partners').textContent = partners.size;
+
+  // Clear lanes
+  ['proposed','tsc','build','validate','published'].forEach(l => {
+    document.getElementById('lane-' + l).innerHTML = '';
+    document.getElementById('cnt-' + l).textContent = '0';
+  });
+
+  // Build cards
+  const counts = {};
+  filtered.forEach(b => {
+    const laneKey = STAGE_MAP[b.stage] || b.stage;
+    counts[laneKey] = (counts[laneKey] || 0) + 1;
+
+    const delivs  = b.deliverables || {};
+    const total   = Object.keys(DELIVERABLE_LABELS).length;
+    const done    = Object.keys(DELIVERABLE_LABELS).filter(k => delivs[k]).length;
+    const cat     = b.category || 'networking';
+    const cc      = CAT_COLORS[cat] || CAT_COLORS.networking;
+
+    const dots = Object.keys(DELIVERABLE_LABELS)
+      .map(k => `<div class="prog-dot${delivs[k] ? ' done' : ''}"></div>`)
+      .join('');
+
+    const card = document.createElement('div');
+    card.className = 'bp-card' + (selectedId === b.id ? ' selected' : '');
+    card.dataset.id = b.id;
+    card.innerHTML = `
+      <div class="card-id">${b.id}</div>
+      <div class="card-title">${b.title}</div>
+      <div class="card-footer">
+        <span class="cat-badge" style="color:${cc.color};background:${cc.bg}">${cat}</span>
+        <div class="prog-mini">
+          <div class="prog-dots">${dots}</div>
+          <span class="prog-label">${done}/${total}</span>
+        </div>
+      </div>`;
+    card.addEventListener('click', () => openDetail(b));
+
+    const lane = document.getElementById('lane-' + laneKey);
+    if (lane) lane.appendChild(card);
+  });
+
+  // Update counts
+  Object.entries(counts).forEach(([k, v]) => {
+    const el = document.getElementById('cnt-' + k);
+    if (el) el.textContent = v;
+  });
+
+  // Add empty states
+  ['proposed','tsc','build','validate','published'].forEach(l => {
+    const lane = document.getElementById('lane-' + l);
+    if (lane && lane.children.length === 0) {
+      lane.innerHTML = '<div class="empty">none</div>';
+    }
+  });
+}
+
+function openDetail(b) {
+  selectedId = b.id;
+  document.querySelectorAll('.bp-card').forEach(c =>
+    c.classList.toggle('selected', c.dataset.id == b.id));
+
+  document.getElementById('dp-id').textContent    = b.id;
+  document.getElementById('dp-title').textContent = b.title;
+  document.getElementById('dp-usecase').textContent  = b.use_case || '—';
+  document.getElementById('dp-persona').textContent  = b.target_persona || '—';
+  document.getElementById('dp-submitted').textContent = b.submitted || '—';
+  document.getElementById('dp-updated').textContent   = b.updated   || '—';
+
+  // Partners
+  const pl = document.getElementById('dp-partners');
+  pl.innerHTML = (b.partners || []).map(p =>
+    `<div class="partner">
+      <span class="partner-name">${p.name}</span>
+      <span class="partner-role">${p.role ? '· ' + p.role : ''}</span>
+     </div>`).join('');
+
+  // Hardware
+  const hl = document.getElementById('dp-hw');
+  hl.innerHTML = (b.hardware || []).map(h =>
+    `<span class="hw-tag">${h}</span>`).join('');
+
+  // OPI components
+  const ol = document.getElementById('dp-opi');
+  ol.innerHTML = (b.opi_components || []).map(c =>
+    `<span class="hw-tag">${c}</span>`).join('');
+
+  // Links
+  const ll = document.getElementById('dp-links');
+  const links = [];
+  if (b.links && b.links.github_issue)
+    links.push(`<a class="detail-link" href="${b.links.github_issue}" target="_blank">GitHub Issue ↗</a>`);
+  if (b.links && b.links.documentation)
+    links.push(`<a class="detail-link" href="${b.links.documentation}" target="_blank">Docs ↗</a>`);
+  ll.innerHTML = links.length ? links.join('') : '<span style="color:var(--muted);font-size:12px">no links yet</span>';
+
+  // Deliverables
+  const delivs = b.deliverables || {};
+  const total  = Object.keys(DELIVERABLE_LABELS).length;
+  const done   = Object.keys(DELIVERABLE_LABELS).filter(k => delivs[k]).length;
+  const pct    = Math.round(done / total * 100);
+
+  document.getElementById('dp-deliverables').innerHTML =
+    Object.entries(DELIVERABLE_LABELS).map(([k, label]) =>
+      `<div class="deliverable-row ${delivs[k] ? 'done' : 'pending'}">
+        <span class="icon">${delivs[k] ? '✓' : '○'}</span>
+        <span class="d-label">${label}</span>
+       </div>`).join('');
+
+  document.getElementById('dp-pct').textContent   = pct + '%';
+  document.getElementById('dp-bar').style.width   = pct + '%';
+
+  // Notes
+  const notes = document.getElementById('dp-notes');
+  notes.textContent = b.notes || '';
+  notes.style.display = b.notes ? 'block' : 'none';
+
+  document.getElementById('detail-panel').classList.add('open');
+  document.getElementById('detail-panel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function closeDetail() {
+  selectedId = null;
+  document.getElementById('detail-panel').classList.remove('open');
+  document.querySelectorAll('.bp-card').forEach(c => c.classList.remove('selected'));
+}
+
+// Filters
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    activeFilter = btn.dataset.filter;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    closeDetail();
+    render();
+  });
+});
+
+loadData();
+</script>
+</body>
+</html>
