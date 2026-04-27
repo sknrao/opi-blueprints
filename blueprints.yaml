@@ -22,11 +22,52 @@
 blueprints:
 
   - id: BP-001
-    title: "F5 BIG-IP Next + Intel IPU E2100 on Red Hat OpenShift"
+    title: "F5 Nginix Plus + Intel IPU E2100 on Red Hat OpenShift"
     stage: published
     category: networking
     submitted: "2024-09-15"
     updated: "2025-03-10"
+    use_case: >
+      Kubernetes-native L4–L7 load balancing offloaded to Intel IPU E2100,
+      freeing host CPU cores for application workloads in a multi-tenant
+      OpenShift cluster.
+    target_persona: "Network architect, platform engineer"
+    partners:
+      - name: "Dell Technologies"
+        role: "Hardware"
+      - name: "Intel"
+        role: "IPU hardware"
+      - name: "F5"
+        role: "BIG-IP Next software"
+      - name: "Red Hat"
+        role: "OpenShift platform"
+    hardware:
+      - "Dell PowerEdge R760"
+      - "Intel IPU E2100"
+    software:
+      - "Red Hat OpenShift 4.14"
+      - "F5 BIG-IP Next for Kubernetes 20.x"
+      - "RHEL 9.3"
+    opi_components:
+      - "opi-api (networking)"
+      - "DPU Operator"
+    deliverables:
+      reference_architecture: true
+      bill_of_materials: true
+      deployment_guide: true
+      use_case_narrative: true
+      validation_results: true
+    links:
+      github_issue: ""
+      documentation: "https://opiproject.org/2025/06/10/enhanced-ai-inference-security-with-intel-openvino-leveraging-intel-ipu-f5-nginx-plus-and-red-hat-openshift/"
+    notes: "Demonstrated at OPI Summit"
+
+  - id: BP-002
+    title: "Ingress off load: F5 BIG-IP Next + Intel IPU E2100 on Red Hat OpenShift"
+    stage: proposed
+    category: networking
+    submitted: "2026-01-29"
+    updated: "2026-01-29"
     use_case: >
       Kubernetes-native L4–L7 load balancing offloaded to Intel IPU E2100,
       freeing host CPU cores for application workloads in a multi-tenant
@@ -61,11 +102,11 @@ blueprints:
       use_case_narrative: true
       validation_results: true
     links:
-      github_issue: "https://github.com/opiproject/opi/issues/1"
+      github_issue: ""
       documentation: ""
-    notes: "Showcased at OCP Global Summit 2024."
+    notes: "Enhancement "
 
-  - id: BP-002
+  - id: BP-003
     title: "Zero-Touch Provisioning with sZTP on Marvell OCTEON DPU"
     stage: validate
     category: provisioning
@@ -96,13 +137,13 @@ blueprints:
       use_case_narrative: true
       validation_results: false
     links:
-      github_issue: "https://github.com/opiproject/opi/issues/2"
+      github_issue: ""
       documentation: ""
     notes: "Validation testing underway in OPI Lab. Expected completion Q2 2025."
 
-  - id: BP-003
+  - id: BP-004
     title: "Multi-Tenant Network Isolation with OVS Offload on NVIDIA BlueField-3"
-    stage: build
+    stage: proposed
     category: networking
     submitted: "2025-01-20"
     updated: "2025-04-05"
@@ -131,11 +172,11 @@ blueprints:
       use_case_narrative: true
       validation_results: false
     links:
-      github_issue: "https://github.com/opiproject/opi/issues/3"
+      github_issue: ""
       documentation: ""
     notes: "IaC artifacts (Helm charts, Ansible playbooks) in progress."
 
-  - id: BP-004
+  - id: BP-005
     title: "NVMe-oF Storage Offload with SPDK on Intel IPU E2100"
     stage: tsc_review
     category: storage
@@ -168,11 +209,11 @@ blueprints:
       use_case_narrative: true
       validation_results: false
     links:
-      github_issue: "https://github.com/opiproject/opi/issues/4"
+      github_issue: ""
       documentation: ""
-    notes: "TSC presentation scheduled for next meeting. Lab hardware availability TBD."
+    notes: "."
 
-  - id: BP-005
+  - id: BP-006
     title: "IPSec / MACsec Line-Rate Encryption Offload for East-West Traffic"
     stage: proposed
     category: security
@@ -202,6 +243,76 @@ blueprints:
       use_case_narrative: false
       validation_results: false
     links:
-      github_issue: "https://github.com/opiproject/opi/issues/5"
+      github_issue: ""
       documentation: ""
     notes: "One-pager submitted. Awaiting TSC scheduling."
+
+  - id: BP-007
+    title: "Standalone network device with VYoS on DPU/IPU"
+    stage: proposed
+    category: networking
+    submitted: "2026-01-22"
+    updated: "2026-04-01"
+    use_case: >
+      VyOS's new release will support ARM. This will provide opportunity 
+      to run on modern devices such as DPU/IPUs. The goal is to run VyOS OS 
+      on DPU/IPU to create standalone network device such as Router and Firewall.
+    target_persona: "network administrator"
+    partners:
+      - name: "Marvell"
+        role: "DPU hardware"
+      - name: "VYoS"
+        role: "Operating System"
+      - name: "World Tech IT"
+        role: "System Integration"
+    hardware:
+      - "Marvell OCTEON CN10K DPU"
+    software:
+      - "strongSwan (IPSec)"
+    opi_components:
+      - "opi-api (networking)"
+    deliverables:
+      reference_architecture: false
+      bill_of_materials: false
+      deployment_guide: false
+      use_case_narrative: false
+      validation_results: false
+    links:
+      github_issue: ""
+      documentation: ""
+    notes: "One-pager submitted. Awaiting TSC scheduling."
+
+  - id: BP-008
+    title: "5G-Core UPF offloading"
+    stage: proposed
+    category: networking
+    submitted: "2026-04-22"
+    updated: "2026-04-22"
+    use_case: >
+      Offloading the 5G User Plane Function (UPF) to DPU/IPUs
+      is a critical architectural shift for 5G Core, edge computing, and 6G, 
+      aimed at maximizing performance while minimizing latency and power consumption.
+    target_persona: "network administrator"
+    partners:
+      - name: "Intel"
+        role: "DPU hardware"
+      - name: "OAI"
+        role: "5G-Core Network Function"
+      - name: "NTT"
+        role: "Advisory"
+    hardware:
+      - "Intel DPU/IPU"
+    software:
+      - " "
+    opi_components:
+      - "opi-api (networking)"
+    deliverables:
+      reference_architecture: false
+      bill_of_materials: false
+      deployment_guide: false
+      use_case_narrative: false
+      validation_results: false
+    links:
+      github_issue: ""
+      documentation: ""
+    notes: "Very Early stage."
